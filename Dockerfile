@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfce4 xfce4-terminal dbus-x11 x11-xserver-utils xvfb x11vnc \
     novnc websockify supervisor sudo python3 python3-pip python3-tk \
     python3-dev scrot imagemagick curl wget ca-certificates gnupg \
-    software-properties-common git jq openssl xdotool \
+    software-properties-common git jq openssl xdotool python3-flask \
     firefox \
     && rm -rf /var/lib/apt/lists/*
 
@@ -33,7 +33,7 @@ COPY docker/startup.sh /usr/local/bin/startup.sh
 COPY docker/app /opt/gui-app
 COPY policy/allowed-operations.yml /opt/gui-app/allowed-operations.yml
 RUN chmod +x /usr/local/bin/startup.sh \
-    && python3 -m pip install --break-system-packages --no-cache-dir pyautogui pillow requests pyyaml flask
+    && python3 -m pip install --break-system-packages --no-cache-dir pyautogui pillow requests pyyaml
 
 WORKDIR /workspace
 USER ubuntuuser
