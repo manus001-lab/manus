@@ -1,4 +1,6 @@
 backup-parts/
+persistent-backup/*
+!persistent-backup/.keep
 cloudflared
 cloudflared.log
 *.png

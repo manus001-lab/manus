@@ -9,7 +9,7 @@ on:
         default: '60'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   gui:
@@ -23,6 +23,8 @@ jobs:
       MISTRAL_MODEL: pixtral-large-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - name: Validate required secrets without printing them
         shell: bash
         run: |
@@ -31,8 +33,24 @@ jobs:
           if [ -z "$BACKUP_PASSPHRASE" ]; then echo 'BACKUP_PASSPHRASE is missing'; ok=0; fi
           if [ -z "$MISTRAL_API_KEY" ]; then echo 'MISTRAL_API_KEY is missing'; ok=0; fi
           test "$ok" -eq 1
-      - name: Build image
-        run: docker build --tag manus-gui:ci .
+      - name: Restore existing image or build a new one
+        shell: bash
+        run: |
+          set +e
+          if [ -f persistent-backup/SHA256SUMS ]; then
+            echo 'Encrypted backup found; attempting restore'
+            BACKUP_PASSPHRASE="$BACKUP_PASSPHRASE" ./scripts/restore.sh persistent-backup restored/gui-runner:latest
+            restored=$?
+          else
+            echo 'No encrypted backup found; creating a new image'
+            restored=1
+          fi
+          if [ "$restored" -eq 0 ]; then
+            docker tag restored/gui-runner:latest manus-gui:ci
+          else
+            echo 'Restore unavailable or failed; creating a fresh image without deleting the old Git backup'
+            docker build --tag manus-gui:ci .
+          fi
       - name: Start GUI container
         run: |
           docker run -d --name manus-gui \
@@ -59,13 +77,21 @@ jobs:
       - name: Optional encrypted split image backup
         run: |
           chmod +x scripts/backup.sh
-          ./scripts/backup.sh manus-gui:ci backup-parts
-      - name: Upload encrypted backup parts
-        uses: actions/upload-artifact@v4
-        with:
-          name: encrypted-gui-image-${{ github.run_id }}
-          path: backup-parts/
-          retention-days: 7
+          rm -rf persistent-backup.new
+          ./scripts/backup.sh manus-gui:ci persistent-backup.new
+          rm -rf persistent-backup.old
+          if [ -d persistent-backup ]; then mv persistent-backup persistent-backup.old; fi
+          mv persistent-backup.new persistent-backup
+      - name: Save encrypted backup parts to Git
+        shell: bash
+        run: |
+          rm -rf persistent-backup.old
+          git add -f persistent-backup/
+          git add -u persistent-backup.old || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Update encrypted GUI container backup" || echo 'No backup changes to commit'
+          git push origin HEAD:main
       - name: Keep session available briefly for manual noVNC inspection
         if: ${{ success() }}
         shell: bash
