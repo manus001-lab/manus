@@ -114,4 +114,4 @@ def get_screenshot(name):
 
 
 if __name__ == "__main__":
-    APP.run(host="127.0.0.1", port=int(os.environ.get("PORT", "8080")), threaded=True)
+    APP.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8080")), threaded=True)
