@@ -33,7 +33,7 @@ COPY docker/startup.sh /usr/local/bin/startup.sh
 COPY docker/app /opt/gui-app
 COPY policy/allowed-operations.yml /opt/gui-app/allowed-operations.yml
 RUN chmod +x /usr/local/bin/startup.sh \
-    && python3 -m pip install --break-system-packages --no-cache-dir pyautogui pillow requests pyyaml
+    && python3 -m pip install --break-system-packages --no-cache-dir pyautogui pillow requests pyyaml flask
 
 WORKDIR /workspace
 USER ubuntuuser
