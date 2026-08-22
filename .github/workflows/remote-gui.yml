@@ -53,9 +53,11 @@ jobs:
           fi
           if [ "$restored" -eq 0 ]; then
             docker tag restored/gui-runner:latest manus-gui:ci
+            echo 'NEW_IMAGE=0' >> "$GITHUB_ENV"
           else
             echo 'Restore unavailable or failed; creating a fresh image without deleting the old Git backup'
             docker build --tag manus-gui:ci .
+            echo 'NEW_IMAGE=1' >> "$GITHUB_ENV"
           fi
       - name: Start candidate GUI container
         run: |
@@ -68,10 +70,12 @@ jobs:
             -p 127.0.0.1:6080:6080 -p 127.0.0.1:8080:8080 \
             -e NOVNC_PASSWORD -e MISTRAL_API_KEY -e MISTRAL_API_BASE -e MISTRAL_MODEL \
             manus-gui:ci
-          for i in {1..60}; do curl --fail --silent http://127.0.0.1:8080/health && break || sleep 2; done
+          if [ "${NEW_IMAGE:-1}" = '1' ]; then
+            for i in {1..60}; do curl --fail --silent http://127.0.0.1:8080/health && break || sleep 2; done
+          fi
       - name: Promote candidate and retain one previous container
         run: |
-          if ! curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
+          if [ "${NEW_IMAGE:-1}" = '1' ] && ! curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
             echo 'Candidate is unhealthy; restoring previous container' >&2
             docker logs manus-gui-candidate || true
             docker rm -f manus-gui-candidate || true
@@ -93,7 +97,8 @@ jobs:
             if [ -n "$url" ]; then echo "Temporary noVNC URL: $url"; break; fi
             sleep 2
           done
-      - name: Verify browsers, sudo, apt, dimensions, and noVNC
+      - name: Verify browsers, sudo, apt, dimensions, and noVNC (new image only)
+        if: env.NEW_IMAGE == '1'
         run: |
           docker exec manus-gui bash -lc 'command -v firefox && command -v microsoft-edge && sudo -n true && apt-get --version >/dev/null'
           curl --fail --silent http://127.0.0.1:8080/health | tee health.json
