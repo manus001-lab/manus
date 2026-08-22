@@ -57,13 +57,31 @@ jobs:
             echo 'Restore unavailable or failed; creating a fresh image without deleting the old Git backup'
             docker build --tag manus-gui:ci .
           fi
-      - name: Start GUI container
+      - name: Start candidate GUI container
         run: |
-          docker run -d --name manus-gui \
+          docker rm -f manus-gui-candidate manus-gui-previous >/dev/null 2>&1 || true
+          if docker container inspect manus-gui >/dev/null 2>&1; then
+            docker stop manus-gui >/dev/null
+            docker rename manus-gui manus-gui-previous
+          fi
+          docker run -d --name manus-gui-candidate \
             -p 127.0.0.1:6080:6080 -p 127.0.0.1:8080:8080 \
             -e NOVNC_PASSWORD -e MISTRAL_API_KEY -e MISTRAL_API_BASE -e MISTRAL_MODEL \
             manus-gui:ci
           for i in {1..60}; do curl --fail --silent http://127.0.0.1:8080/health && break || sleep 2; done
+      - name: Promote candidate and retain one previous container
+        run: |
+          if ! curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
+            echo 'Candidate is unhealthy; restoring previous container' >&2
+            docker logs manus-gui-candidate || true
+            docker rm -f manus-gui-candidate || true
+            if docker container inspect manus-gui-previous >/dev/null 2>&1; then
+              docker rename manus-gui-previous manus-gui
+              docker start manus-gui >/dev/null
+            fi
+            exit 1
+          fi
+          docker rename manus-gui-candidate manus-gui
       - name: Start temporary authenticated access tunnel
         shell: bash
         run: |
@@ -114,4 +132,6 @@ jobs:
           sleep "$seconds"
       - name: Cleanup
         if: always()
-        run: docker rm -f manus-gui || true
+        run: |
+          docker rm -f manus-gui-candidate manus-gui || true
+          # manus-gui-previous is intentionally retained, with at most one previous container.
