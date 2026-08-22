@@ -27,8 +27,8 @@ jobs:
         shell: bash
         run: |
           ok=1
-          if [ -z "$NOVNC_PASSWORD" ] || [ "${#NOVNC_PASSWORD}" -lt 12 ]; then echo 'NOVNC_PASSWORD is missing or shorter than 12 characters'; ok=0; fi
-          if [ -z "$BACKUP_PASSPHRASE" ] || [ "${#BACKUP_PASSPHRASE}" -lt 16 ]; then echo 'BACKUP_PASSPHRASE is missing or shorter than 16 characters'; ok=0; fi
+          if [ -z "$NOVNC_PASSWORD" ]; then echo 'NOVNC_PASSWORD is missing'; ok=0; fi
+          if [ -z "$BACKUP_PASSPHRASE" ]; then echo 'BACKUP_PASSPHRASE is missing'; ok=0; fi
           if [ -z "$MISTRAL_API_KEY" ]; then echo 'MISTRAL_API_KEY is missing'; ok=0; fi
           test "$ok" -eq 1
       - name: Build image

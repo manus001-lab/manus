@@ -10,7 +10,7 @@ GitHub Actions上で一時的に起動する、Ubuntu風GUI・Firefox・Microsof
 
 ## GitHub Secrets
 
-`BACKUP_PASSPHRASE`、`MISTRAL_API_KEY`、`NOVNC_PASSWORD` をリポジトリの Actions Secrets に登録します。`MISTRAL_API_BASE` と `MISTRAL_MODEL` は任意で、既定値は `https://api.mistral.ai/v1` と `pixtral-large-latest` です。Secretsの値はチャット、コード、ログ、アーティファクトへ出力しないでください。
+`BACKUP_PASSPHRASE`、`MISTRAL_API_KEY`、`NOVNC_PASSWORD` をリポジトリの Actions Secrets に登録します。`MISTRAL_API_BASE` と `MISTRAL_MODEL` は任意で、既定値は `https://api.mistral.ai/v1` と `pixtral-large-latest` です。ワークフローはこれらのSecretが空欄でないことだけを確認し、文字数の条件は設けません。Secretsの値はチャット、コード、ログ、アーティファクトへ出力しないでください。
 
 ## 起動
 
