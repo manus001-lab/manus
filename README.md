@@ -1,0 +1,21 @@
+# Ephemeral Ubuntu GUI Runner
+
+GitHub Actions上で一時的に起動する、Ubuntu風GUI・Firefox・Microsoft Edge・noVNC・PyAutoGUI環境です。ActionsのVMはジョブ終了後に破棄されるため、本プロジェクトは常時稼働サービスではなく、手動起動したジョブの実行中だけ遠隔操作できる検証環境として設計しています。
+
+## 安全モデル
+
+自動操作は `policy/allowed-operations.yml` に定義した許可サイト、許可操作、座標範囲に限定します。AIはスクリーンショットから操作候補を返すだけで、実行側が許可リストを再検証します。未許可サイト、未許可操作、認証情報入力、送信、購入、削除、設定変更は拒否します。パスフレーズとAPIキーはGitへ保存せず、GitHub Actions Secretsで管理してください。
+
+公開トンネルを使用する場合でも、noVNCにはパスワード認証を必須とし、トークンをログへ出力しないでください。完全な匿名公開は実装しません。遠隔デスクトップは高い権限を持つため、公開範囲を広げる場合は必ず短時間、強固なパスワード、許可IPまたはVPNを併用してください。
+
+## GitHub Secrets
+
+`BACKUP_PASSPHRASE`、`MISTRAL_API_KEY`、`NOVNC_PASSWORD` をリポジトリの Actions Secrets に登録します。`MISTRAL_API_BASE` と `MISTRAL_MODEL` は任意で、既定値は `https://api.mistral.ai/v1` と `pixtral-large-latest` です。Secretsの値はチャット、コード、ログ、アーティファクトへ出力しないでください。
+
+## 起動
+
+GitHubの Actions から **Ephemeral Ubuntu GUI** を `workflow_dispatch` で実行します。既定の最大実行時間は60分です。ジョブ中に生成された暗号化バックアップは分割され、GitへコミットせずActions Artifactとして保存します。通常Gitへ保存したい場合は、暗号化済み分割ファイルだけを手動で別コミットしてください。復元には同じパスフレーズが必要です。
+
+## 制約
+
+GitHub-hosted runnerは一時VMであり、ジョブ終了後にGUI、コンテナ、公開URLは消滅します。常時アクセスが必要な場合は、Dockerと永続ディスクを使える常時稼働VMへ移行してください。sudoとaptの確認はコンテナ内で行いますが、Actionsホストの権限やネットワーク設定を変更するものではありません。

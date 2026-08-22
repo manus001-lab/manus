@@ -1,0 +1,11 @@
+# Add only sites and operations that you explicitly authorize.
+# Empty by default: all automated clicks are denied until this file is edited.
+# Never add login, password entry, payment, purchase, delete, submit, or account settings.
+version: 1
+sites: []
+
+# Example (disabled; copy into sites only after reviewing):
+# sites:
+#   - host: docs.example.com
+#     operations: [click]
+#     click_bounds: {x_min: 0, y_min: 0, x_max: 1440, y_max: 900}

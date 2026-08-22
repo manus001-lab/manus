@@ -1,0 +1,6 @@
+backup-parts/
+cloudflared
+cloudflared.log
+*.png
+.env
+__pycache__/
