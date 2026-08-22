@@ -75,11 +75,20 @@ jobs:
             -e NOVNC_PASSWORD -e MISTRAL_API_KEY -e MISTRAL_API_BASE -e MISTRAL_MODEL \
             manus-gui:ci
           if [ "${NEW_IMAGE:-1}" = '1' ]; then
-            for i in {1..60}; do curl --fail --silent http://127.0.0.1:8080/health && break || sleep 2; done
+            health_ok=0
+            for i in {1..60}; do
+              if curl --fail --silent --max-time 2 http://127.0.0.1:8080/health >/dev/null; then health_ok=1; break; fi
+              sleep 2
+            done
+            if [ "$health_ok" -ne 1 ]; then
+              echo 'Candidate API health check timed out' >&2
+              docker logs manus-gui-candidate || true
+              exit 1
+            fi
           fi
       - name: Promote candidate and retain one previous container
         run: |
-          if [ "${NEW_IMAGE:-1}" = '1' ] && ! curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
+          if [ "${NEW_IMAGE:-1}" = '1' ] && ! curl --fail --silent --max-time 5 http://127.0.0.1:8080/health >/dev/null; then
             echo 'Candidate is unhealthy; restoring previous container' >&2
             docker logs manus-gui-candidate || true
             docker rm -f manus-gui-candidate || true
