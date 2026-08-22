@@ -41,7 +41,19 @@ Terminal=false
 Categories=System;TerminalEmulator;
 EOF
 
-for item in firefox microsoft-edge xfce4-terminal; do
+cat > "$APP_DIR/thunar.desktop" <<'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=File Manager
+Comment=Manage files and folders
+Exec=thunar %U
+Icon=system-file-manager
+Terminal=false
+Categories=System;FileManager;
+EOF
+
+for item in firefox microsoft-edge xfce4-terminal thunar; do
   cp "$APP_DIR/$item.desktop" "$DESKTOP_DIR/$item.desktop"
   chmod +x "$DESKTOP_DIR/$item.desktop"
 done

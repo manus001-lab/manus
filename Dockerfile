@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LC_ALL=C.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    xfce4 xfce4-terminal dbus-x11 x11-xserver-utils xvfb x11vnc \
+    xfce4 xfce4-terminal thunar dbus-x11 x11-xserver-utils xvfb x11vnc \
     novnc websockify supervisor sudo python3 python3-pip python3-tk \
     python3-dev scrot imagemagick curl wget ca-certificates gnupg \
     software-properties-common git jq openssl xdotool python3-flask \
