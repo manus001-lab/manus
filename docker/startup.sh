@@ -12,6 +12,7 @@ chmod 600 "$XAUTHORITY"
 
 mkdir -p /workspace/screenshots /workspace/backup
 chmod 700 /workspace/screenshots /workspace/backup
+/usr/local/bin/desktop-icons.sh
 if [[ -z "${NOVNC_PASSWORD:-}" ]]; then
   echo "NOVNC_PASSWORD is required" >&2
   exit 1

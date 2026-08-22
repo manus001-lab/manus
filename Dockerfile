@@ -30,9 +30,10 @@ RUN useradd -m -s /bin/bash ubuntuuser \
 
 COPY docker/supervisord.conf /etc/supervisor/conf.d/gui.conf
 COPY docker/startup.sh /usr/local/bin/startup.sh
+COPY docker/desktop-icons.sh /usr/local/bin/desktop-icons.sh
 COPY docker/app /opt/gui-app
 COPY policy/allowed-operations.yml /opt/gui-app/allowed-operations.yml
-RUN chmod +x /usr/local/bin/startup.sh \
+RUN chmod +x /usr/local/bin/startup.sh /usr/local/bin/desktop-icons.sh \
     && python3 -m pip install --break-system-packages --no-cache-dir pyautogui pillow requests pyyaml
 
 WORKDIR /workspace
