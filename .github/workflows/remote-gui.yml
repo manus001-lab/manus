@@ -37,6 +37,12 @@ jobs:
         shell: bash
         run: |
           set +e
+          rm -rf persistent-backup
+          if git ls-remote --exit-code --heads origin container-backup >/dev/null 2>&1; then
+            git fetch --no-tags origin container-backup:refs/remotes/origin/container-backup
+            mkdir -p persistent-backup
+            git archive "origin/container-backup" | tar -x -C persistent-backup
+          fi
           if [ -f persistent-backup/SHA256SUMS ]; then
             echo 'Encrypted backup found; attempting restore'
             BACKUP_PASSPHRASE="$BACKUP_PASSPHRASE" ./scripts/restore.sh persistent-backup restored/gui-runner:latest
@@ -82,16 +88,21 @@ jobs:
           rm -rf persistent-backup.old
           if [ -d persistent-backup ]; then mv persistent-backup persistent-backup.old; fi
           mv persistent-backup.new persistent-backup
-      - name: Save encrypted backup parts to Git
+      - name: Replace backup branch with latest encrypted parts
         shell: bash
         run: |
-          rm -rf persistent-backup.old
-          git add -f persistent-backup/
-          git add -u persistent-backup.old || true
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m "Update encrypted GUI container backup" || echo 'No backup changes to commit'
-          git push origin HEAD:main
+          set -Eeuo pipefail
+          publish_dir=$(mktemp -d)
+          git worktree add --detach "$publish_dir" HEAD
+          git -C "$publish_dir" switch --orphan container-backup-new
+          git -C "$publish_dir" rm -rf . >/dev/null 2>&1 || true
+          cp -a persistent-backup/. "$publish_dir"/
+          git -C "$publish_dir" add -f .
+          git -C "$publish_dir" config user.name 'github-actions[bot]'
+          git -C "$publish_dir" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$publish_dir" commit -m "Replace encrypted GUI container backup"
+          git -C "$publish_dir" push --force origin HEAD:container-backup
+          git worktree remove --force "$publish_dir"
       - name: Keep session available briefly for manual noVNC inspection
         if: ${{ success() }}
         shell: bash
